@@ -14,6 +14,7 @@ import com.seregamazur.pulse.shared.event.EventEnvelope;
 import com.seregamazur.pulse.shared.event.InventoryFailedEvent;
 import com.seregamazur.pulse.shared.event.InventoryReservedEvent;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
+import com.seregamazur.pulse.shared.event.PaymentCompletedEvent;
 import com.seregamazur.pulse.shared.event.PaymentFailedEvent;
 import com.seregamazur.pulse.shared.outbox.EventType;
 import com.seregamazur.pulse.shared.outbox.OutboxRecord;
@@ -60,6 +61,40 @@ public class InventoryService {
             mapper.writeValueAsString(new InventoryReservedEvent(event.orderId(), event.items(), event.totalPrice()))));
     }
 
+    @Retryable(
+        value = OptimisticLockException.class,
+        //1 + 2
+        maxRetries = 2,
+        delay = 100,
+        timeUnit = TimeUnit.MILLISECONDS
+    )
+    @Transactional
+    public void onPaymentCompleted(PaymentCompletedEvent event, UUID eventUUID) {
+        List<UUID> products = event.items().stream().map(OrderCreatedEvent.Item::productId).toList();
+        List<InventoryItem> inventoryItems = inventoryRepository.findAllById(products);
+
+        for (OrderCreatedEvent.Item orderItem : event.items()) {
+            for (InventoryItem inventoryItem : inventoryItems) {
+                if (inventoryItem.getProductId().compareTo(orderItem.productId()) == 0) {
+                    inventoryItem.reserve(orderItem.quantity());
+                }
+            }
+        }
+        inventoryRepository.saveAll(inventoryItems);
+        InventoryInbox inbox = new InventoryInbox(eventUUID, Instant.now());
+        inboxRepository.save(inbox);
+        outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.INVENTORY, event.orderId(),
+            EventType.INVENTORY_RESERVED,
+            mapper.writeValueAsString(new InventoryReservedEvent(event.orderId(), event.items(), event.totalPrice()))));
+    }
+
+    @Retryable(
+        value = OptimisticLockException.class,
+        //1 + 2
+        maxRetries = 2,
+        delay = 100,
+        timeUnit = TimeUnit.MILLISECONDS
+    )
     @Transactional
     public void onPaymentFailed(PaymentFailedEvent event, UUID eventUUID) {
         List<UUID> products = event.items().stream().map(OrderCreatedEvent.Item::productId).toList();
@@ -81,9 +116,11 @@ public class InventoryService {
     public void publishFailure(EventEnvelope envelope, OutOfStockException e) {
         InventoryInbox inbox = new InventoryInbox(envelope.aggregateId(), Instant.now());
         inboxRepository.save(inbox);
+        //TODO items here from order
         outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.INVENTORY, envelope.aggregateId(),
             EventType.INVENTORY_FAILED,
-            mapper.writeValueAsString(new InventoryFailedEvent(envelope.aggregateId(), e.getLocalizedMessage()))));
+            mapper.writeValueAsString(new InventoryFailedEvent(envelope.aggregateId(),
+                List.of(), e.getLocalizedMessage()))));
     }
 
 

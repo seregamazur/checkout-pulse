@@ -64,8 +64,8 @@ public class Order {
         this.recalculateTotal();
     }
 
-    public void markAsReserved() {
-        if (this.status != OrderStatus.PENDING) {
+    public void markAsReservedForPostPayment() {
+        if (this.status != OrderStatus.PAID) {
             throw new IllegalStateException("Cannot reserve not PENDING order");
         }
         this.status = OrderStatus.RESERVED;

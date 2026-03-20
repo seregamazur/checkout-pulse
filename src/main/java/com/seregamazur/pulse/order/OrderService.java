@@ -20,6 +20,7 @@ import com.seregamazur.pulse.order.idempotency.IdempotencyStatus;
 import com.seregamazur.pulse.order.inbox.OrderInbox;
 import com.seregamazur.pulse.order.inbox.OrderInboxRepository;
 import com.seregamazur.pulse.shared.event.InventoryFailedEvent;
+import com.seregamazur.pulse.shared.event.InventoryReservedEvent;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
 import com.seregamazur.pulse.shared.event.PaymentCompletedEvent;
 import com.seregamazur.pulse.shared.event.PaymentFailedEvent;
@@ -118,6 +119,18 @@ public class OrderService {
         if (order.isPresent()) {
             inboxRepository.save(new OrderInbox(id, Instant.now()));
             order.get().cancel(event.reason());
+            orderRepository.save(order.get());
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    @Transactional
+    public void onInventoryReserved(InventoryReservedEvent event, UUID id) {
+        Optional<Order> order = orderRepository.findById(event.orderId());
+        if (order.isPresent()) {
+            inboxRepository.save(new OrderInbox(id, Instant.now()));
+            order.get().markAsReservedForPostPayment();
             orderRepository.save(order.get());
         } else {
             throw new IllegalStateException();

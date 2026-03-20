@@ -4,40 +4,15 @@ import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Declarables;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import com.seregamazur.pulse.shared.outbox.EventType;
 
 @Configuration
-public class RabbitMqConfig {
-    public static final String OUTBOX_EXCHANGE = "outbox-exchange";
-
-    public static final String ORDER_QUEUE = "order.queue";
-    public static final String INVENTORY_QUEUE = "inventory.queue";
-    public static final String PAYMENT_QUEUE = "payment.queue";
-
-    @Bean
-    public TopicExchange outboxExchange() {
-        return new TopicExchange(OUTBOX_EXCHANGE, true, false);
-    }
-
-    @Bean
-    public Queue orderQueue() {
-        return new Queue(ORDER_QUEUE, true);
-    }
-
-    @Bean
-    public Queue inventoryQueue() {
-        return new Queue(INVENTORY_QUEUE, true);
-    }
-
-    @Bean
-    public Queue paymentQueue() {
-        return new Queue(PAYMENT_QUEUE, true);
-    }
+@Profile("optimistic")
+public class OptimisticStrategyRabbitMqConfig {
 
     @Bean
     public Declarables orderBinding(Queue orderQueue, TopicExchange outboxExchange) {
@@ -62,11 +37,5 @@ public class RabbitMqConfig {
             BindingBuilder.bind(paymentQueue).to(outboxExchange).with(EventType.INVENTORY_RESERVED.name())
         );
     }
-
-    @Bean
-    public MessageConverter jsonMessageConverter() {
-        return new JacksonJsonMessageConverter();
-    }
-
 
 }

@@ -4,10 +4,11 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
-import com.seregamazur.pulse.config.RabbitMqConfig;
+import com.seregamazur.pulse.config.RabbitMqSharedConfig;
 import com.seregamazur.pulse.inventory.inbox.InventoryInboxRepository;
 import com.seregamazur.pulse.shared.event.EventEnvelope;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
+import com.seregamazur.pulse.shared.event.PaymentCompletedEvent;
 import com.seregamazur.pulse.shared.event.PaymentFailedEvent;
 import com.seregamazur.pulse.shared.outbox.EventType;
 
@@ -22,7 +23,7 @@ public class InventoryQueueListener {
     private final InventoryService inventoryService;
     private final ObjectMapper mapper;
 
-    @RabbitListener(queues = RabbitMqConfig.INVENTORY_QUEUE)
+    @RabbitListener(queues = RabbitMqSharedConfig.INVENTORY_QUEUE)
     public void processEvent(@Payload EventEnvelope message) {
         if (repo.findById(message.id()).isPresent()) {
             return;
@@ -36,6 +37,8 @@ public class InventoryQueueListener {
         }
         if (message.eventType() == EventType.PAYMENT_FAILED) {
             inventoryService.onPaymentFailed(mapper.readValue(message.payload(), PaymentFailedEvent.class), message.id());
+        } else if (message.eventType() == EventType.PAYMENT_COMPLETED) {
+            inventoryService.onPaymentCompleted(mapper.readValue(message.payload(), PaymentCompletedEvent.class), message.id());
         }
     }
 }
