@@ -13,6 +13,7 @@ public class RabbitMqSharedConfig {
     public static final String OUTBOX_EXCHANGE = "outbox-exchange";
 
     public static final String ORDER_QUEUE = "order.queue";
+    public static final String ORDER_VIEW_QUEUE = "order-view.queue";
     public static final String INVENTORY_QUEUE = "inventory.queue";
     public static final String PAYMENT_QUEUE = "payment.queue";
 
@@ -24,6 +25,11 @@ public class RabbitMqSharedConfig {
     @Bean
     public Queue orderQueue() {
         return new Queue(ORDER_QUEUE, true);
+    }
+
+    @Bean
+    public Queue orderViewQueue() {
+        return new Queue(ORDER_VIEW_QUEUE, true);
     }
 
     @Bean

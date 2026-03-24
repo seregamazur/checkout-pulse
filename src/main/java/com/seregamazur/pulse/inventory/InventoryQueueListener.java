@@ -9,7 +9,7 @@ import com.seregamazur.pulse.inventory.inbox.InventoryInboxRepository;
 import com.seregamazur.pulse.shared.event.EventEnvelope;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
 import com.seregamazur.pulse.shared.event.PaymentCompletedEvent;
-import com.seregamazur.pulse.shared.event.PaymentFailedEvent;
+import com.seregamazur.pulse.shared.event.PaymentDeclinedEvent;
 import com.seregamazur.pulse.shared.outbox.EventType;
 
 import lombok.RequiredArgsConstructor;
@@ -36,9 +36,14 @@ public class InventoryQueueListener {
             inventoryService.publishFailure(message, ex);
         }
         if (message.eventType() == EventType.PAYMENT_FAILED) {
-            inventoryService.onPaymentFailed(mapper.readValue(message.payload(), PaymentFailedEvent.class), message.id());
-        } else if (message.eventType() == EventType.PAYMENT_COMPLETED) {
-            inventoryService.onPaymentCompleted(mapper.readValue(message.payload(), PaymentCompletedEvent.class), message.id());
+            inventoryService.onPaymentFailed(mapper.readValue(message.payload(), PaymentDeclinedEvent.class), message.id());
+        }
+        try {
+            if (message.eventType() == EventType.PAYMENT_PROCESSED) {
+                inventoryService.onPaymentCompleted(mapper.readValue(message.payload(), PaymentCompletedEvent.class), message.id());
+            }
+        } catch (OutOfStockException ex) {
+            inventoryService.publishFailure(message, ex);
         }
     }
 }

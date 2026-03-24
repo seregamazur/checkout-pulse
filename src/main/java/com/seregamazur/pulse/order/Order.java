@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.seregamazur.pulse.shared.InventoryStatus;
+import com.seregamazur.pulse.shared.OrderStrategy;
+import com.seregamazur.pulse.shared.PaymentStatus;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,6 +35,18 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private OrderFailureReason failureReason;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus;
+
+    @Enumerated(EnumType.STRING)
+    private InventoryStatus inventoryStatus;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStrategy strategy;
+
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
@@ -47,14 +63,16 @@ public class Order {
         Order order = new Order();
         order.id = UUID.randomUUID();
         order.userId = userId;
-        order.status = OrderStatus.PENDING;
+        order.status = OrderStatus.CREATED;
+        order.paymentStatus = PaymentStatus.NOT_STARTED;
+        order.inventoryStatus = InventoryStatus.NOT_STARTED;
         order.totalAmount = BigDecimal.ZERO;
         order.createdAt = LocalDateTime.now();
         return order;
     }
 
     public void addItem(UUID productId, int quantity, BigDecimal priceAtCheckout) {
-        if (this.status != OrderStatus.PENDING) {
+        if (this.status != OrderStatus.CREATED) {
             throw new IllegalStateException("Cannot add items to not PENDING order");
         }
 
@@ -64,22 +82,44 @@ public class Order {
         this.recalculateTotal();
     }
 
-    public void markAsReservedForPostPayment() {
-        if (this.status != OrderStatus.PAID) {
-            throw new IllegalStateException("Cannot reserve not PENDING order");
-        }
-        this.status = OrderStatus.RESERVED;
+    public void recordPaymentSuccess() {
+        this.paymentStatus = PaymentStatus.SUCCESS;
+        this.status = OrderStatus.PROCESSING;
+        checkIfFinished();
     }
 
-    public void markAsPaid() {
-        if (this.status != OrderStatus.RESERVED && this.status != OrderStatus.PENDING) {
-            throw new IllegalStateException("Invalid order state for payment: " + this.status);
-        }
-        this.status = OrderStatus.PAID;
+    public void recordInventoryReserved() {
+        this.inventoryStatus = InventoryStatus.RESERVED;
+        checkIfFinished();
     }
 
-    public void cancel(String reason) {
-        this.status = OrderStatus.CANCELLED;
+    public void recordInventoryReleased() {
+        this.inventoryStatus = InventoryStatus.RELEASED;
+    }
+
+    public void recordPaymentRefund() {
+        this.paymentStatus = PaymentStatus.REFUNDED;
+    }
+
+    public void recordPaymentDeclined() {
+        this.paymentStatus = PaymentStatus.DECLINED;
+        markAsFailed(OrderFailureReason.PAYMENT_FAILED);
+    }
+
+    public void recordInventoryFailed() {
+        this.inventoryStatus = InventoryStatus.OUT_OF_STOCK;
+        markAsFailed(OrderFailureReason.OUT_OF_STOCK);
+    }
+
+    public void markAsFailed(OrderFailureReason failureReason) {
+        this.status = OrderStatus.FAILED;
+        this.failureReason = failureReason;
+    }
+
+    private void checkIfFinished() {
+        if (this.paymentStatus == PaymentStatus.SUCCESS && this.inventoryStatus == InventoryStatus.RESERVED) {
+            this.status = OrderStatus.COMPLETED;
+        }
     }
 
     private void recalculateTotal() {

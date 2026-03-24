@@ -10,9 +10,11 @@ import com.seregamazur.pulse.shared.event.EventEnvelope;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OutboxPublisher {
 
     private final OutboxRepository repository;
@@ -26,7 +28,7 @@ public class OutboxPublisher {
         for (OutboxRecord event : events) {
             rabbitTemplate.convertAndSend("outbox-exchange", event.getEventType().name(),
                 EventEnvelope.fromOutboxRecord(event));
-            System.out.println("SUCCESSFULY PUBLISHED EVENT TO RABBIT!!!!");
+            log.info("SUCCESSFULY PUBLISHED {}!", event.getEventType().name());
         }
         repository.deleteAllById(events.stream().map(OutboxRecord::getId).toList());
     }

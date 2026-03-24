@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.seregamazur.pulse.shared.PaymentStatus;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -49,14 +51,20 @@ class Payment {
         this.paidAt = paidAt;
     }
 
-    public void markPaid() {
-        this.status = PaymentStatus.AUTHORIZED;
+    public void recordAsPaid() {
+        this.status = PaymentStatus.SUCCESS;
         this.providerPaymentId = UUID.randomUUID();
         this.paidAt = Instant.now();
     }
 
-    public void markFailed() {
-        this.status = PaymentStatus.FAILED;
+    public void recordAsDeclined() {
+        this.status = PaymentStatus.DECLINED;
+        this.providerPaymentId = UUID.randomUUID();
+        this.paidAt = Instant.now();
+    }
+
+    public void recordAsRefund() {
+        this.status = PaymentStatus.REFUNDED;
         this.providerPaymentId = UUID.randomUUID();
         this.paidAt = Instant.now();
     }

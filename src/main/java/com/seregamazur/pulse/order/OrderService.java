@@ -20,10 +20,13 @@ import com.seregamazur.pulse.order.idempotency.IdempotencyStatus;
 import com.seregamazur.pulse.order.inbox.OrderInbox;
 import com.seregamazur.pulse.order.inbox.OrderInboxRepository;
 import com.seregamazur.pulse.shared.event.InventoryFailedEvent;
+import com.seregamazur.pulse.shared.event.InventoryReleasedEvent;
 import com.seregamazur.pulse.shared.event.InventoryReservedEvent;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
+import com.seregamazur.pulse.shared.event.OrderUpdatedEvent;
 import com.seregamazur.pulse.shared.event.PaymentCompletedEvent;
-import com.seregamazur.pulse.shared.event.PaymentFailedEvent;
+import com.seregamazur.pulse.shared.event.PaymentDeclinedEvent;
+import com.seregamazur.pulse.shared.event.PaymentRefundEvent;
 import com.seregamazur.pulse.shared.outbox.EventType;
 import com.seregamazur.pulse.shared.outbox.OutboxRecord;
 import com.seregamazur.pulse.shared.outbox.OutboxRepository;
@@ -85,6 +88,9 @@ public class OrderService {
                 EventType.ORDER_CREATED, mapper.writeValueAsString(event));
         outboxRepository.save(outboxRecord);
 
+        orderUpdatedEventToOutbox(savedOrder);
+
+
         return OrderResponse.fromEntity(savedOrder);
     }
 
@@ -93,8 +99,11 @@ public class OrderService {
         Optional<Order> order = orderRepository.findById(event.orderId());
         if (order.isPresent()) {
             inboxRepository.save(new OrderInbox(id, Instant.now()));
-            order.get().markAsPaid();
+            order.get().recordPaymentSuccess();
             orderRepository.save(order.get());
+
+            orderUpdatedEventToOutbox(order.get());
+
         } else {
             throw new IllegalStateException();
         }
@@ -102,12 +111,30 @@ public class OrderService {
     }
 
     @Transactional
-    public void onPaymentFailed(PaymentFailedEvent event, UUID id) {
+    public void onPaymentDeclined(PaymentDeclinedEvent event, UUID id) {
         Optional<Order> order = orderRepository.findById(event.orderId());
         if (order.isPresent()) {
             inboxRepository.save(new OrderInbox(id, Instant.now()));
-            order.get().cancel(event.reason());
+            order.get().recordPaymentDeclined();
             orderRepository.save(order.get());
+
+            orderUpdatedEventToOutbox(order.get());
+
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    @Transactional
+    public void onPaymentRefund(PaymentRefundEvent event, UUID id) {
+        Optional<Order> order = orderRepository.findById(event.orderId());
+        if (order.isPresent()) {
+            inboxRepository.save(new OrderInbox(id, Instant.now()));
+            order.get().recordPaymentRefund();
+            orderRepository.save(order.get());
+
+            orderUpdatedEventToOutbox(order.get());
+
         } else {
             throw new IllegalStateException();
         }
@@ -118,8 +145,11 @@ public class OrderService {
         Optional<Order> order = orderRepository.findById(event.orderId());
         if (order.isPresent()) {
             inboxRepository.save(new OrderInbox(id, Instant.now()));
-            order.get().cancel(event.reason());
+            order.get().recordInventoryFailed();
             orderRepository.save(order.get());
+
+            orderUpdatedEventToOutbox(order.get());
+
         } else {
             throw new IllegalStateException();
         }
@@ -130,12 +160,36 @@ public class OrderService {
         Optional<Order> order = orderRepository.findById(event.orderId());
         if (order.isPresent()) {
             inboxRepository.save(new OrderInbox(id, Instant.now()));
-            order.get().markAsReservedForPostPayment();
+            order.get().recordInventoryReserved();
             orderRepository.save(order.get());
+
+            orderUpdatedEventToOutbox(order.get());
+
         } else {
             throw new IllegalStateException();
         }
     }
 
+    @Transactional
+    public void onInventoryReleased(InventoryReleasedEvent event, UUID id) {
+        Optional<Order> order = orderRepository.findById(event.orderId());
+        if (order.isPresent()) {
+            inboxRepository.save(new OrderInbox(id, Instant.now()));
+            order.get().recordInventoryReleased();
+            orderRepository.save(order.get());
+
+            orderUpdatedEventToOutbox(order.get());
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    private void orderUpdatedEventToOutbox(Order order) {
+        OrderUpdatedEvent orderUpdatedEvent = new OrderUpdatedEvent(order.getId());
+        OutboxRecord orderUpdatedRecord =
+            new OutboxRecord(UUID.randomUUID(), OutboxType.ORDER, order.getId(),
+                EventType.ORDER_UPDATED, mapper.writeValueAsString(orderUpdatedEvent));
+        outboxRepository.save(orderUpdatedRecord);
+    }
 
 }

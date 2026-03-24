@@ -1,4 +1,4 @@
-package com.seregamazur.pulse.order.inbox;
+package com.seregamazur.pulse.order.views.inbox;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -9,17 +9,17 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name = "orders_inbox", schema = "orders")
+@Table(name = "order_views_inbox", schema = "orders")
 @Data
-public class OrderInbox {
+public class OrderViewInbox {
     @Id
     private UUID id;
     private Instant processedAt;
 
-    protected OrderInbox() {
+    protected OrderViewInbox() {
     }
 
-    public OrderInbox(UUID id, Instant processedAt) {
+    public OrderViewInbox(UUID id, Instant processedAt) {
         this.id = id;
         this.processedAt = processedAt;
     }

@@ -1,6 +1,8 @@
 services:
   postgres:
     image: 'postgres:latest'
+    tmpfs:
+      - /var/lib/postgresql
     environment:
       - 'POSTGRES_DB=checkout-pulse'
       - 'POSTGRES_PASSWORD=password'

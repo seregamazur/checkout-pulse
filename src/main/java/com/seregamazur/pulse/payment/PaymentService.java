@@ -1,6 +1,8 @@
 package com.seregamazur.pulse.payment;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -9,11 +11,13 @@ import org.springframework.stereotype.Service;
 
 import com.seregamazur.pulse.payment.inbox.PaymentInbox;
 import com.seregamazur.pulse.payment.inbox.PaymentInboxRepository;
+import com.seregamazur.pulse.shared.PaymentStatus;
 import com.seregamazur.pulse.shared.event.InventoryFailedEvent;
 import com.seregamazur.pulse.shared.event.InventoryReservedEvent;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
 import com.seregamazur.pulse.shared.event.PaymentCompletedEvent;
-import com.seregamazur.pulse.shared.event.PaymentFailedEvent;
+import com.seregamazur.pulse.shared.event.PaymentDeclinedEvent;
+import com.seregamazur.pulse.shared.event.PaymentRefundEvent;
 import com.seregamazur.pulse.shared.outbox.EventType;
 import com.seregamazur.pulse.shared.outbox.OutboxRecord;
 import com.seregamazur.pulse.shared.outbox.OutboxRepository;
@@ -34,38 +38,11 @@ public class PaymentService {
 
     @Transactional
     public void processPayment(InventoryReservedEvent event, UUID id) {
-        Payment payment = new Payment(
-            UUID.randomUUID(),
-            event.orderId(),
-            event.totalPrice(),
-            PaymentStatus.PENDING,
-            "ADYEN",
-            null,
-            Instant.now(),
-            null
-        );
+        Payment payment = new Payment(UUID.randomUUID(), event.orderId(), event.totalPrice(), PaymentStatus.PENDING, "ADYEN", null, Instant.now(), null);
 
         paymentRepository.save(payment);
 
-        boolean success = rand.nextBoolean();
-
-        if (success) {
-            payment.markPaid();
-            paymentRepository.save(payment);
-            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event.orderId(),
-                EventType.PAYMENT_COMPLETED,
-                mapper.writeValueAsString(new PaymentCompletedEvent(
-                    payment.getId(), event.orderId(), event.items(), event.totalPrice(), payment.getProvider(),
-                    payment.getProviderPaymentId(), payment.getPaidAt()))));
-        } else {
-            payment.markFailed();
-            paymentRepository.save(payment);
-            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event.orderId(),
-                EventType.PAYMENT_FAILED,
-                mapper.writeValueAsString(new PaymentFailedEvent(
-                    payment.getId(), event.orderId(), event.items(), payment.getProvider(),
-                    payment.getProviderPaymentId(), "NOT ENOUGH MONEY"))));
-        }
+        randomlyPayOrDecline(payment, event.orderId(), event.items(), event.totalPrice());
 
         inboxRepository.save(new PaymentInbox(id, Instant.now()));
     }
@@ -77,13 +54,9 @@ public class PaymentService {
         if (optionalPayment.isPresent()) {
             Payment payment = optionalPayment.get();
 
-            payment.markFailed();
+            payment.recordAsRefund();
             paymentRepository.save(payment);
-            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event.orderId(),
-                EventType.PAYMENT_FAILED,
-                mapper.writeValueAsString(new PaymentFailedEvent(
-                    payment.getId(), event.orderId(), event.items(), payment.getProvider(),
-                    payment.getProviderPaymentId(), "NOT ENOUGH MONEY"))));
+            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event.orderId(), EventType.PAYMENT_REFUNDED, mapper.writeValueAsString(new PaymentRefundEvent(payment.getId(), event.orderId(), event.items(), payment.getProvider(), payment.getProviderPaymentId(), "No product at the moment"))));
 
             inboxRepository.save(new PaymentInbox(id, Instant.now()));
         }
@@ -91,39 +64,26 @@ public class PaymentService {
 
     @Transactional
     public void onOrderCreated(OrderCreatedEvent event, UUID id) {
-        Payment payment = new Payment(
-            UUID.randomUUID(),
-            event.orderId(),
-            event.totalPrice(),
-            PaymentStatus.PENDING,
-            "ADYEN",
-            null,
-            Instant.now(),
-            null
-        );
+        Payment payment = new Payment(UUID.randomUUID(), event.orderId(), event.totalPrice(), PaymentStatus.PENDING, "ADYEN", null, Instant.now(), null);
 
         paymentRepository.save(payment);
 
+        randomlyPayOrDecline(payment, event.orderId(), event.items(), event.totalPrice());
+
+        inboxRepository.save(new PaymentInbox(id, Instant.now()));
+    }
+
+    private void randomlyPayOrDecline(Payment payment, UUID event, List<OrderCreatedEvent.Item> event1, BigDecimal event2) {
         boolean success = rand.nextBoolean();
 
         if (success) {
-            payment.markPaid();
+            payment.recordAsPaid();
             paymentRepository.save(payment);
-            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event.orderId(),
-                EventType.PAYMENT_COMPLETED,
-                mapper.writeValueAsString(new PaymentCompletedEvent(
-                    payment.getId(), event.orderId(), event.items(), event.totalPrice(), payment.getProvider(),
-                    payment.getProviderPaymentId(), payment.getPaidAt()))));
+            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event, EventType.PAYMENT_PROCESSED, mapper.writeValueAsString(new PaymentCompletedEvent(payment.getId(), event, event1, event2, payment.getProvider(), payment.getProviderPaymentId(), payment.getPaidAt()))));
         } else {
-            payment.markFailed();
+            payment.recordAsDeclined();
             paymentRepository.save(payment);
-            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event.orderId(),
-                EventType.PAYMENT_FAILED,
-                mapper.writeValueAsString(new PaymentFailedEvent(
-                    payment.getId(), event.orderId(), event.items(), payment.getProvider(),
-                    payment.getProviderPaymentId(), "NOT ENOUGH MONEY"))));
+            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event, EventType.PAYMENT_FAILED, mapper.writeValueAsString(new PaymentDeclinedEvent(payment.getId(), event, event1, payment.getProvider(), payment.getProviderPaymentId(), "NOT ENOUGH MONEY"))));
         }
-
-        inboxRepository.save(new PaymentInbox(id, Instant.now()));
     }
 }

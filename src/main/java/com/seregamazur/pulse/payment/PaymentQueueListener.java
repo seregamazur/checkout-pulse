@@ -28,12 +28,12 @@ public class PaymentQueueListener {
         if (repo.findById(message.id()).isPresent()) {
             return;
         }
-        if (message.eventType() == EventType.INVENTORY_RESERVED) {
+        if (message.eventType() == EventType.STOCK_RESERVED) {
             paymentService.processPayment(
                 mapper.readValue(message.payload(), InventoryReservedEvent.class),
                 message.id()
             );
-        } else if (message.eventType() == EventType.INVENTORY_FAILED) {
+        } else if (message.eventType() == EventType.STOCK_FAILED) {
             paymentService.onInventoryFailed(
                 mapper.readValue(message.payload(), InventoryFailedEvent.class),
                 message.id());

@@ -12,10 +12,11 @@ import com.seregamazur.pulse.inventory.inbox.InventoryInbox;
 import com.seregamazur.pulse.inventory.inbox.InventoryInboxRepository;
 import com.seregamazur.pulse.shared.event.EventEnvelope;
 import com.seregamazur.pulse.shared.event.InventoryFailedEvent;
+import com.seregamazur.pulse.shared.event.InventoryReleasedEvent;
 import com.seregamazur.pulse.shared.event.InventoryReservedEvent;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
 import com.seregamazur.pulse.shared.event.PaymentCompletedEvent;
-import com.seregamazur.pulse.shared.event.PaymentFailedEvent;
+import com.seregamazur.pulse.shared.event.PaymentDeclinedEvent;
 import com.seregamazur.pulse.shared.outbox.EventType;
 import com.seregamazur.pulse.shared.outbox.OutboxRecord;
 import com.seregamazur.pulse.shared.outbox.OutboxRepository;
@@ -57,7 +58,7 @@ public class InventoryService {
         InventoryInbox inbox = new InventoryInbox(eventUUID, Instant.now());
         inboxRepository.save(inbox);
         outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.INVENTORY, event.orderId(),
-            EventType.INVENTORY_RESERVED,
+            EventType.STOCK_RESERVED,
             mapper.writeValueAsString(new InventoryReservedEvent(event.orderId(), event.items(), event.totalPrice()))));
     }
 
@@ -84,7 +85,7 @@ public class InventoryService {
         InventoryInbox inbox = new InventoryInbox(eventUUID, Instant.now());
         inboxRepository.save(inbox);
         outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.INVENTORY, event.orderId(),
-            EventType.INVENTORY_RESERVED,
+            EventType.STOCK_RESERVED,
             mapper.writeValueAsString(new InventoryReservedEvent(event.orderId(), event.items(), event.totalPrice()))));
     }
 
@@ -96,7 +97,7 @@ public class InventoryService {
         timeUnit = TimeUnit.MILLISECONDS
     )
     @Transactional
-    public void onPaymentFailed(PaymentFailedEvent event, UUID eventUUID) {
+    public void onPaymentFailed(PaymentDeclinedEvent event, UUID eventUUID) {
         List<UUID> products = event.items().stream().map(OrderCreatedEvent.Item::productId).toList();
         List<InventoryItem> inventoryItems = inventoryRepository.findAllById(products);
 
@@ -110,6 +111,10 @@ public class InventoryService {
         inventoryRepository.saveAll(inventoryItems);
         InventoryInbox inbox = new InventoryInbox(eventUUID, Instant.now());
         inboxRepository.save(inbox);
+
+        outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.INVENTORY, event.orderId(),
+            EventType.STOCK_RELEASED,
+            mapper.writeValueAsString(new InventoryReleasedEvent(event.orderId(), event.items()))));
     }
 
     @Transactional
@@ -118,7 +123,7 @@ public class InventoryService {
         inboxRepository.save(inbox);
         //TODO items here from order
         outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.INVENTORY, envelope.aggregateId(),
-            EventType.INVENTORY_FAILED,
+            EventType.STOCK_FAILED,
             mapper.writeValueAsString(new InventoryFailedEvent(envelope.aggregateId(),
                 List.of(), e.getLocalizedMessage()))));
     }
