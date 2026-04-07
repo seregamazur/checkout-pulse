@@ -54,8 +54,7 @@ public class OrderService {
         Optional<IdempotencyRecord> record = idempotencyRepository.findById(idempotencyKey);
         if (record.isPresent()) {
             if (record.get().getStatus() == IdempotencyStatus.COMPLETED) {
-                OrderResponse orderResponse = mapper.readValue(record.get().getResponseBody(), OrderResponse.class);
-                return orderResponse;
+                return mapper.readValue(record.get().getResponseBody(), OrderResponse.class);
             } else {
                 //TODO need some scheduler to get rid of such orders
                 throw new IllegalStateException("Idempotency not finished progress!");
@@ -82,8 +81,10 @@ public class OrderService {
         }
         Order savedOrder = orderRepository.save(order);
         event = new OrderCreatedEvent(savedOrder.getUserId(), savedOrder.getId(), eventItems, savedOrder.getTotalAmount());
-        idempotencyRepository.save(IdempotencyRecord.createCompleted(idempotencyKey,
-            mapper.writeValueAsString(savedOrder)));
+        OrderResponse response = OrderResponse.fromEntity(savedOrder);
+        idempotencyRepository.save(IdempotencyRecord.createCompleted(
+            idempotencyKey,
+            mapper.writeValueAsString(response)));
 
         OutboxRecord outboxRecord =
             new OutboxRecord(UUID.randomUUID(), OutboxType.ORDER, savedOrder.getId(),
@@ -92,8 +93,7 @@ public class OrderService {
 
         orderUpdatedEventToOutbox(savedOrder);
 
-
-        return OrderResponse.fromEntity(savedOrder);
+        return response;
     }
 
     @Transactional

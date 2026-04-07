@@ -41,12 +41,9 @@ public class CartController {
             return ResponseEntity.ok(new CartResponse(userId, List.of(), BigDecimal.ZERO));
         }
 
-        List<UUID> productIds = rawItems.keySet().stream()
-            .map(id -> UUID.fromString(id.toString()))
-            .toList();
+        List<UUID> productIds = rawItems.keySet().stream().toList();
 
         var products = productRepository.findAllById(productIds);
-
 
         List<CartItemDetailed> detailedItems = products.stream().map(p -> {
             long qty = rawItems.get(p.getId());

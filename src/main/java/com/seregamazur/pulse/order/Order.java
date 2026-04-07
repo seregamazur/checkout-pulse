@@ -73,7 +73,7 @@ public class Order {
 
     public void addItem(UUID productId, long quantity, BigDecimal priceAtCheckout) {
         if (this.status != OrderStatus.CREATED) {
-            throw new IllegalStateException("Cannot add items to not PENDING order");
+            throw new IllegalStateException("Cannot add items to not CREATED order");
         }
 
         OrderItem newItem = new OrderItem(this, productId, quantity, priceAtCheckout);

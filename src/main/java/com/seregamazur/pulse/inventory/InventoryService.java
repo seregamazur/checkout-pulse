@@ -119,7 +119,7 @@ public class InventoryService {
 
     @Transactional
     public void publishFailure(EventEnvelope envelope, OutOfStockException e) {
-        InventoryInbox inbox = new InventoryInbox(envelope.aggregateId(), Instant.now());
+        InventoryInbox inbox = new InventoryInbox(envelope.id(), Instant.now());
         inboxRepository.save(inbox);
         outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.INVENTORY, envelope.aggregateId(),
             EventType.STOCK_FAILED,

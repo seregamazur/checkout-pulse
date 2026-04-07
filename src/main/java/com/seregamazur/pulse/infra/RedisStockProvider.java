@@ -48,7 +48,8 @@ public class RedisStockProvider {
         Long stock = redis.opsForValue().get("stock:" + productId);
 
         if (stock == null) {
-            stock = inventoryRepository.findById(productId).get().getAvailableQuantity();
+            InventoryItem item = inventoryRepository.findById(productId).orElseThrow(() -> new RuntimeException("Unexpected exception! Failed to find product in DB"));
+            stock = item.getAvailableQuantity();
             redis.opsForValue().setIfAbsent("stock:" + productId, stock);
         }
         return Math.toIntExact(stock);
@@ -62,13 +63,13 @@ public class RedisStockProvider {
         try {
             for (InventoryItem item : inventoryItems) {
                 stockBeforeUpdate.add(item);
-                redis.opsForValue().set("stock:" + item.getProductId(), (long) item.getAvailableQuantity());
+                redis.opsForValue().set("stock:" + item.getProductId(), item.getAvailableQuantity());
             }
             inboxRepository.save(new RedisStockInbox(eventId, Instant.now()));
         } catch (Exception e) {
             if (!stockBeforeUpdate.isEmpty()) {
                 for (InventoryItem item : stockBeforeUpdate) {
-                    redis.opsForValue().set("stock:" + item.getProductId(), (long) item.getAvailableQuantity());
+                    redis.opsForValue().set("stock:" + item.getProductId(), item.getAvailableQuantity());
                 }
             }
         }
@@ -86,9 +87,9 @@ public class RedisStockProvider {
             }
 
             cartRedis.delete(cartKey);
-            Optional<Cart> cartFromDb = cartRepository.findByUserId(event.userId());
-            cartFromDb.ifPresent(Cart::clear);
-            cartRepository.save(cartFromDb.get());
+            Cart cartFromDb = cartRepository.findByUserId(event.userId()).orElseThrow(() -> new RuntimeException("Cart Not Found"));
+            cartFromDb.clear();
+            cartRepository.save(cartFromDb);
             inboxRepository.save(new RedisStockInbox(eventId, Instant.now()));
 
         } catch (Exception e) {

@@ -14,6 +14,7 @@ import com.seregamazur.pulse.shared.OrderStrategy;
 import com.seregamazur.pulse.shared.PaymentStatus;
 import com.seregamazur.pulse.shared.event.OrderUpdatedEvent;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -24,6 +25,7 @@ public class OrderProjectionHandler {
     private final OrderRepository orderRepository;
     private final OrderViewInboxRepository inboxRepository;
 
+    @Transactional
     public void onOrderUpdate(OrderUpdatedEvent event, UUID eventId) {
         Order order = orderRepository.findById(event.orderId()).orElseThrow();
 

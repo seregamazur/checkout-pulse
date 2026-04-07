@@ -72,17 +72,17 @@ public class PaymentService {
         inboxRepository.save(new PaymentInbox(id, Instant.now()));
     }
 
-    private void randomlyPayOrDecline(Payment payment, UUID event, List<OrderCreatedEvent.Item> event1, BigDecimal event2) {
+    private void randomlyPayOrDecline(Payment payment, UUID event, List<OrderCreatedEvent.Item> items, BigDecimal paymentAmount) {
 //        boolean success = rand.nextBoolean();
 
 //        if (success) {
         payment.recordAsPaid();
         paymentRepository.save(payment);
-        outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event, EventType.PAYMENT_PROCESSED, mapper.writeValueAsString(new PaymentCompletedEvent(payment.getId(), event, event1, event2, payment.getProvider(), payment.getProviderPaymentId(), payment.getPaidAt()))));
+        outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event, EventType.PAYMENT_PROCESSED, mapper.writeValueAsString(new PaymentCompletedEvent(payment.getId(), event, items, paymentAmount, payment.getProvider(), payment.getProviderPaymentId(), payment.getPaidAt()))));
 //        } else {
 //            payment.recordAsDeclined();
 //            paymentRepository.save(payment);
-//            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event, EventType.PAYMENT_FAILED, mapper.writeValueAsString(new PaymentDeclinedEvent(payment.getId(), event, event1, payment.getProvider(), payment.getProviderPaymentId(), "NOT ENOUGH MONEY"))));
+//            outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.PAYMENT, event, EventType.PAYMENT_FAILED, mapper.writeValueAsString(new PaymentDeclinedEvent(payment.getId(), event, items, payment.getProvider(), payment.getProviderPaymentId(), "NOT ENOUGH MONEY"))));
 //        }
     }
 }
