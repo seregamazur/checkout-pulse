@@ -18,10 +18,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
 
 @Entity
-@Data
+@Getter
 @Table(name = "orders", schema = "orders")
 public class Order {
 
@@ -71,14 +71,13 @@ public class Order {
         return order;
     }
 
-    public void addItem(UUID productId, int quantity, BigDecimal priceAtCheckout) {
+    public void addItem(UUID productId, long quantity, BigDecimal priceAtCheckout) {
         if (this.status != OrderStatus.CREATED) {
             throw new IllegalStateException("Cannot add items to not PENDING order");
         }
 
-        OrderItem newItem = new OrderItem(productId, quantity, priceAtCheckout);
+        OrderItem newItem = new OrderItem(this, productId, quantity, priceAtCheckout);
         this.items.add(newItem);
-        newItem.setOrder(this);
         this.recalculateTotal();
     }
 

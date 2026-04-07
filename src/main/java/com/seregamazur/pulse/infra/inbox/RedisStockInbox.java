@@ -1,4 +1,4 @@
-package com.seregamazur.pulse.order.views.inbox;
+package com.seregamazur.pulse.infra.inbox;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -9,17 +9,17 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 
 @Entity
-@Table(name = "order_views_inbox", schema = "orders")
 @Getter
-public class OrderViewInbox {
+@Table(name = "redis_stock_inbox", schema = "infra")
+public class RedisStockInbox {
     @Id
     private UUID id;
     private Instant processedAt;
 
-    protected OrderViewInbox() {
+    protected RedisStockInbox() {
     }
 
-    public OrderViewInbox(UUID id, Instant processedAt) {
+    public RedisStockInbox(UUID id, Instant processedAt) {
         this.id = id;
         this.processedAt = processedAt;
     }

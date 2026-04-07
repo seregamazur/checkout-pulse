@@ -14,7 +14,9 @@ class TestcontainersConfiguration {
 	@Bean
 	@ServiceConnection
 	PostgreSQLContainer postgresContainer() {
-		return new PostgreSQLContainer(DockerImageName.parse("postgres:latest"));
+		return new PostgreSQLContainer(DockerImageName.parse("postgres:latest"))
+			.withCommand("postgres", "-c", "wal_level=logical")
+			.withInitScript("init-schemas.sql");
 	}
 
 	@Bean

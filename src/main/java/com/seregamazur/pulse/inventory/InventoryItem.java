@@ -16,7 +16,7 @@ public class InventoryItem {
     @Id
     private UUID productId;
 
-    private int availableQuantity;
+    private long availableQuantity;
 
     @Version
     private Long version;
@@ -24,16 +24,16 @@ public class InventoryItem {
     protected InventoryItem() {
     }
 
-    public InventoryItem(UUID productId, int initialQuantity) {
+    public InventoryItem(UUID productId, long initialQuantity) {
         this.productId = productId;
         this.availableQuantity = initialQuantity;
     }
 
-    public void addStock(int amount) {
+    public void addStock(long amount) {
         this.availableQuantity += amount;
     }
 
-    public void reserve(int quantityToReserve) {
+    public void reserve(long quantityToReserve) {
         if (quantityToReserve <= 0) {
             throw new IllegalArgumentException("Quantity must be positive");
         }
@@ -43,7 +43,7 @@ public class InventoryItem {
         this.availableQuantity -= quantityToReserve;
     }
 
-    public void restock(int quantityToAdd) {
+    public void restock(long quantityToAdd) {
         this.availableQuantity += quantityToAdd;
     }
 }

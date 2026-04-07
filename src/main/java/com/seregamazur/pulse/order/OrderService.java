@@ -9,8 +9,9 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.seregamazur.pulse.cart.dto.CartItemDetailed;
-import com.seregamazur.pulse.cart.dto.CartResponse;
+import com.seregamazur.pulse.cart.Cart;
+import com.seregamazur.pulse.cart.CartItem;
+import com.seregamazur.pulse.infra.RedisStockProvider;
 import com.seregamazur.pulse.inventory.Product;
 import com.seregamazur.pulse.inventory.ProductRepository;
 import com.seregamazur.pulse.order.dto.OrderResponse;
@@ -45,10 +46,11 @@ public class OrderService {
     private final OrderInboxRepository inboxRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final RedisStockProvider stockProvider;
     private final ObjectMapper mapper;
 
     @Transactional
-    public OrderResponse createOrder(CartResponse cart, UUID idempotencyKey) throws IllegalStateException {
+    public OrderResponse createOrder(UUID cartId, UUID idempotencyKey) throws IllegalStateException {
         Optional<IdempotencyRecord> record = idempotencyRepository.findById(idempotencyKey);
         if (record.isPresent()) {
             if (record.get().getStatus() == IdempotencyStatus.COMPLETED) {
@@ -59,27 +61,27 @@ public class OrderService {
                 throw new IllegalStateException("Idempotency not finished progress!");
             }
         }
-
-        List<UUID> productIds = cart.items().stream()
-            .map(CartItemDetailed::productId)
+        Cart cart = stockProvider.getUsersCart(cartId);
+        List<UUID> productIds = cart.getItems().stream()
+            .map(CartItem::getProductId)
             .toList();
         var products = productRepository.findAllById(productIds);
 
-        Order order = Order.create(cart.userId());
+        Order order = Order.create(cart.getUserId());
         OrderCreatedEvent event;
         List<OrderCreatedEvent.Item> eventItems = new ArrayList<>();
 
         for (Product product : products) {
-            for (CartItemDetailed item : cart.items()) {
-                if (product.getId().compareTo(item.productId()) == 0) {
+            for (CartItem item : cart.getItems()) {
+                if (product.getId().compareTo(item.getProductId()) == 0) {
                     BigDecimal itemPrice = product.getBasePrice();
-                    order.addItem(product.getId(), item.quantity(), itemPrice);
-                    eventItems.add(new OrderCreatedEvent.Item(product.getId(), item.quantity()));
+                    order.addItem(product.getId(), item.getQuantity(), itemPrice);
+                    eventItems.add(new OrderCreatedEvent.Item(product.getId(), item.getQuantity()));
                 }
             }
         }
         Order savedOrder = orderRepository.save(order);
-        event = new OrderCreatedEvent(savedOrder.getId(), eventItems, savedOrder.getTotalAmount());
+        event = new OrderCreatedEvent(savedOrder.getUserId(), savedOrder.getId(), eventItems, savedOrder.getTotalAmount());
         idempotencyRepository.save(IdempotencyRecord.createCompleted(idempotencyKey,
             mapper.writeValueAsString(savedOrder)));
 

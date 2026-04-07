@@ -11,11 +11,11 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
 
 @Entity
 @Table(name = "outbox", schema = "shared")
-@Data
+@Getter
 public class OutboxRecord {
     @Id
     private UUID id;

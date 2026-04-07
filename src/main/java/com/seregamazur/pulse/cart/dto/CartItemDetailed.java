@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public record CartItemDetailed(
     UUID productId,
     String name,
-    int quantity,
+    long quantity,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     BigDecimal price,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")

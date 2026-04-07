@@ -12,11 +12,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
 
 @Entity
 @Table(name = "order_items", schema = "orders")
-@Data
+@Getter
 public class OrderItem {
 
     @Id
@@ -31,7 +31,7 @@ public class OrderItem {
     private UUID productId;
 
     @Column(nullable = false)
-    private int quantity;
+    private long quantity;
 
     @Column(nullable = false)
     private BigDecimal price;
@@ -39,9 +39,10 @@ public class OrderItem {
     public OrderItem() {
     }
 
-    protected OrderItem(UUID productId, int quantity, BigDecimal price) {
+    protected OrderItem(Order order, UUID productId, long quantity, BigDecimal price) {
         if (quantity <= 0) throw new IllegalArgumentException("Quantity must be > 0");
         this.id = UUID.randomUUID();
+        this.order = order;
         this.productId = productId;
         this.quantity = quantity;
         this.price = price;

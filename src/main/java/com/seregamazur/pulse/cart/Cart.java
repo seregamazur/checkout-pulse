@@ -11,9 +11,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 @Entity
 @Table(name = "carts", schema = "inventory")
 public class Cart {
@@ -35,7 +35,7 @@ public class Cart {
         this.userId = userId;
     }
 
-    public void updateOrAddItem(UUID productId, int quantity) {
+    public void updateOrAddItem(UUID productId, long quantity) {
         Optional<CartItem> existingItem = items.stream()
             .filter(item -> item.getProductId().equals(productId))
             .findFirst();

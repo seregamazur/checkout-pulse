@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 public record OrderCreatedEvent(
+    UUID userId,
     UUID orderId,
     List<Item> items,
     BigDecimal totalPrice
@@ -12,7 +13,7 @@ public record OrderCreatedEvent(
 
     public record Item(
         UUID productId,
-        int quantity
+        long quantity
     ) {
     }
 }

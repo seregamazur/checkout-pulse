@@ -121,7 +121,6 @@ public class InventoryService {
     public void publishFailure(EventEnvelope envelope, OutOfStockException e) {
         InventoryInbox inbox = new InventoryInbox(envelope.aggregateId(), Instant.now());
         inboxRepository.save(inbox);
-        //TODO items here from order
         outboxRepository.save(new OutboxRecord(UUID.randomUUID(), OutboxType.INVENTORY, envelope.aggregateId(),
             EventType.STOCK_FAILED,
             mapper.writeValueAsString(new InventoryFailedEvent(envelope.aggregateId(),

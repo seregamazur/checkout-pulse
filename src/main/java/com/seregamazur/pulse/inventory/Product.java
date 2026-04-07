@@ -7,10 +7,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
 
 @Entity
-@Data
+@Getter
 @Table(name = "products", schema = "inventory")
 public class Product {
 

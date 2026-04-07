@@ -28,7 +28,7 @@ public class OrderController {
             return ResponseEntity.status(409).build();
         }
         try {
-            return ResponseEntity.ok().body(orderService.createOrder(request.cart(), request.idempotencyKey()));
+            return ResponseEntity.ok().body(orderService.createOrder(request.cartId(), request.idempotencyKey()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).build();
         } finally {

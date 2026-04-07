@@ -8,10 +8,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
 
 @Entity
-@Data
+@Getter
 @Table(name = "cart_items", schema = "inventory")
 public class CartItem {
     @Id
@@ -22,19 +22,19 @@ public class CartItem {
     private Cart cart;
 
     private UUID productId;
-    private int quantity;
+    private long quantity;
 
     protected CartItem() {
     }
 
-    protected CartItem(Cart cart, UUID productId, int quantity) {
+    protected CartItem(Cart cart, UUID productId, long quantity) {
         this.id = UUID.randomUUID();
         this.cart = cart;
         this.productId = productId;
         this.quantity = quantity;
     }
 
-    protected void updateQuantity(int newQuantity) {
+    protected void updateQuantity(long newQuantity) {
         if (newQuantity < 0) throw new IllegalArgumentException("Quantity cannot be negative");
         this.quantity = newQuantity;
     }

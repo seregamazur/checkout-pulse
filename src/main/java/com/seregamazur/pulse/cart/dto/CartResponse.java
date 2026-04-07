@@ -10,6 +10,6 @@ public record CartResponse(
     UUID userId,
     List<CartItemDetailed> items,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
-    BigDecimal totalPrice // += items.subtotal
+    BigDecimal totalPrice
 ) {
 }

@@ -6,11 +6,11 @@ import java.util.UUID;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
 
 @Entity
 @Table(name = "orders_inbox", schema = "orders")
-@Data
+@Getter
 public class OrderInbox {
     @Id
     private UUID id;

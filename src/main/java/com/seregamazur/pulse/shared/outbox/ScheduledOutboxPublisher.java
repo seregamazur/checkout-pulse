@@ -3,6 +3,7 @@ package com.seregamazur.pulse.shared.outbox;
 import java.util.List;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OutboxPublisher {
+@ConditionalOnProperty(name = "outbox.mode", havingValue = "polling")
+public class ScheduledOutboxPublisher {
 
     private final OutboxRepository repository;
     private final RabbitTemplate rabbitTemplate;

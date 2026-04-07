@@ -1,6 +1,7 @@
 services:
   postgres:
     image: 'postgres:latest'
+    command: ['postgres', '-c', 'wal_level=logical']
     tmpfs:
       - /var/lib/postgresql
     environment:
@@ -21,6 +22,14 @@ services:
     image: 'redis:latest'
     ports:
       - '6379:6379'
+
+  # UI for Redis
+  redis-commander:
+    image: 'rediscommander/redis-commander:latest'
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
 
   rabbitmq:
     image: 'rabbitmq:3-management'

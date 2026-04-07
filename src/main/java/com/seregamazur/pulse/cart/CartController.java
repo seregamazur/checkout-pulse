@@ -49,7 +49,7 @@ public class CartController {
 
 
         List<CartItemDetailed> detailedItems = products.stream().map(p -> {
-            int qty = rawItems.get(p.getId());
+            long qty = rawItems.get(p.getId());
             BigDecimal subTotal = p.getBasePrice().multiply(BigDecimal.valueOf(qty));
             return new CartItemDetailed(p.getId(), p.getName(), qty, p.getBasePrice(), subTotal);
         }).toList();
