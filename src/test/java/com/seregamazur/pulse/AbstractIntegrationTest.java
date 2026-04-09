@@ -25,6 +25,7 @@ import com.seregamazur.pulse.inventory.InventoryRepository;
 import com.seregamazur.pulse.inventory.InventoryService;
 import com.seregamazur.pulse.inventory.Product;
 import com.seregamazur.pulse.inventory.ProductRepository;
+import com.seregamazur.pulse.inventory.inbox.InventoryInboxRepository;
 import com.seregamazur.pulse.order.OrderQueueListener;
 import com.seregamazur.pulse.order.OrderRepository;
 import com.seregamazur.pulse.order.OrderService;
@@ -36,7 +37,6 @@ import com.seregamazur.pulse.order.views.inbox.OrderViewInboxRepository;
 import com.seregamazur.pulse.payment.PaymentRepository;
 import com.seregamazur.pulse.payment.PaymentService;
 import com.seregamazur.pulse.payment.inbox.PaymentInboxRepository;
-import com.seregamazur.pulse.inventory.inbox.InventoryInboxRepository;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
 import com.seregamazur.pulse.shared.outbox.OutboxRepository;
 
@@ -52,35 +52,59 @@ import tools.jackson.databind.ObjectMapper;
 @Import(TestcontainersConfiguration.class)
 abstract class AbstractIntegrationTest {
 
-    @Autowired protected CartService cartService;
-    @Autowired protected CartRepository cartRepository;
-    @Autowired protected OrderService orderService;
-    @Autowired protected OrderRepository orderRepository;
-    @Autowired protected InventoryService inventoryService;
-    @Autowired protected InventoryRepository inventoryRepository;
-    @Autowired protected PaymentService paymentService;
-    @Autowired protected PaymentRepository paymentRepository;
-    @Autowired protected ProductRepository productRepository;
-    @Autowired protected RedisStockProvider redisStockProvider;
-    @Autowired protected OutboxRepository outboxRepository;
-    @Autowired protected IdempotencyRepository idempotencyRepository;
-    @Autowired protected OrderInboxRepository orderInboxRepository;
-    @Autowired protected PaymentInboxRepository paymentInboxRepository;
-    @Autowired protected InventoryInboxRepository inventoryInboxRepository;
-    @Autowired protected RedisStockInboxRepository redisStockInboxRepository;
-    @Autowired protected OrderViewRepository orderViewRepository;
-    @Autowired protected OrderViewInboxRepository orderViewInboxRepository;
-    @Autowired protected OrderProjectionHandler orderProjectionHandler;
-    @Autowired protected OrderQueueListener orderQueueListener;
+    @Autowired
+    protected CartService cartService;
+    @Autowired
+    protected CartRepository cartRepository;
+    @Autowired
+    protected OrderService orderService;
+    @Autowired
+    protected OrderRepository orderRepository;
+    @Autowired
+    protected InventoryService inventoryService;
+    @Autowired
+    protected InventoryRepository inventoryRepository;
+    @Autowired
+    protected PaymentService paymentService;
+    @Autowired
+    protected PaymentRepository paymentRepository;
+    @Autowired
+    protected ProductRepository productRepository;
+    @Autowired
+    protected RedisStockProvider redisStockProvider;
+    @Autowired
+    protected OutboxRepository outboxRepository;
+    @Autowired
+    protected IdempotencyRepository idempotencyRepository;
+    @Autowired
+    protected OrderInboxRepository orderInboxRepository;
+    @Autowired
+    protected PaymentInboxRepository paymentInboxRepository;
+    @Autowired
+    protected InventoryInboxRepository inventoryInboxRepository;
+    @Autowired
+    protected RedisStockInboxRepository redisStockInboxRepository;
+    @Autowired
+    protected OrderViewRepository orderViewRepository;
+    @Autowired
+    protected OrderViewInboxRepository orderViewInboxRepository;
+    @Autowired
+    protected OrderProjectionHandler orderProjectionHandler;
+    @Autowired
+    protected OrderQueueListener orderQueueListener;
 
-    @Autowired @Qualifier("redisCart")
+    @Autowired
+    @Qualifier("redisCart")
     protected RedisTemplate<String, Object> redisCart;
 
-    @Autowired @Qualifier("redisStock")
+    @Autowired
+    @Qualifier("redisStock")
     protected RedisTemplate<String, Long> redisStock;
 
-    @Autowired protected ObjectMapper objectMapper;
-    @Autowired protected PlatformTransactionManager txManager;
+    @Autowired
+    protected ObjectMapper objectMapper;
+    @Autowired
+    protected PlatformTransactionManager txManager;
 
     protected static final UUID USER_ID = UUID.fromString("aaaa0000-0000-0000-0000-000000000001");
 

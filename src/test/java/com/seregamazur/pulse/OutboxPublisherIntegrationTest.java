@@ -12,10 +12,10 @@ import org.springframework.context.annotation.Import;
 
 import com.seregamazur.pulse.shared.event.OrderUpdatedEvent;
 import com.seregamazur.pulse.shared.outbox.EventType;
-import com.seregamazur.pulse.shared.outbox.ScheduledOutboxPublisher;
 import com.seregamazur.pulse.shared.outbox.OutboxRecord;
 import com.seregamazur.pulse.shared.outbox.OutboxRepository;
 import com.seregamazur.pulse.shared.outbox.OutboxType;
+import com.seregamazur.pulse.shared.outbox.ScheduledOutboxPublisher;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -32,9 +32,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import(TestcontainersConfiguration.class)
 class OutboxPublisherIntegrationTest {
 
-    @Autowired ScheduledOutboxPublisher outboxPublisher;
-    @Autowired OutboxRepository outboxRepository;
-    @Autowired ObjectMapper objectMapper;
+    @Autowired
+    ScheduledOutboxPublisher outboxPublisher;
+    @Autowired
+    OutboxRepository outboxRepository;
+    @Autowired
+    ObjectMapper objectMapper;
 
     @BeforeEach
     void cleanUp() {

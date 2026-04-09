@@ -28,7 +28,7 @@ public class CartService {
     public CartService(
         @Qualifier("redisCart") RedisTemplate<String, Object> redisCart,
         @Qualifier("redisStock") RedisTemplate<String, Long> redisStock,
-        RedisScript<Long> reserveScript,
+        @Qualifier("reserveRedisScript") RedisScript<Long> reserveScript,
         RedisStockProvider stockProvider,
         CartRepository cartRepository) {
         this.redisCart = redisCart;
@@ -75,8 +75,9 @@ public class CartService {
         }
 
         // 3. Update Redis + DB
-        redisCart.opsForHash().put(cartKey, productId.toString(), quantity);
-        redisCart.expire(cartKey, Duration.ofMinutes(5));
+        redisCart.opsForHash().increment(cartKey, productId.toString(), quantity);
+        long expirationTime = System.currentTimeMillis() + (1 * 60 * 1000);
+        redisCart.opsForZSet().add("cart:cleanup:queue", userId, expirationTime);
 
         Cart cart = cartRepository.findByUserId(userId).orElseGet(() -> new Cart(userId));
         cart.updateOrAddItem(productId, quantity);
@@ -87,7 +88,7 @@ public class CartService {
         } catch (Exception e) {
             redisStock.opsForValue().increment(reservedStockName, -quantity);
 
-            redisCart.opsForHash().delete(cartKey, productId.toString());
+            redisCart.opsForHash().increment(cartKey, productId.toString(), -quantity);
 
             throw new RuntimeException("Failed to save cart to DB, reservation rolled back", e);
         }

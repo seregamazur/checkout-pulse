@@ -18,6 +18,8 @@ import com.seregamazur.pulse.infra.inbox.RedisStockInbox;
 import com.seregamazur.pulse.infra.inbox.RedisStockInboxRepository;
 import com.seregamazur.pulse.inventory.InventoryItem;
 import com.seregamazur.pulse.inventory.InventoryRepository;
+import com.seregamazur.pulse.inventory.exception.CartNotFoundException;
+import com.seregamazur.pulse.inventory.exception.ProductNotFoundException;
 import com.seregamazur.pulse.shared.event.OrderCreatedEvent;
 
 import jakarta.transaction.Transactional;
@@ -48,7 +50,8 @@ public class RedisStockProvider {
         Long stock = redis.opsForValue().get("stock:" + productId);
 
         if (stock == null) {
-            InventoryItem item = inventoryRepository.findById(productId).orElseThrow(() -> new RuntimeException("Unexpected exception! Failed to find product in DB"));
+            InventoryItem item = inventoryRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId.toString()));
             stock = item.getAvailableQuantity();
             redis.opsForValue().setIfAbsent("stock:" + productId, stock);
         }
@@ -87,7 +90,8 @@ public class RedisStockProvider {
             }
 
             cartRedis.delete(cartKey);
-            Cart cartFromDb = cartRepository.findByUserId(event.userId()).orElseThrow(() -> new RuntimeException("Cart Not Found"));
+            Cart cartFromDb = cartRepository.findByUserId(event.userId())
+                .orElseThrow(() -> new CartNotFoundException(event.userId().toString()));
             cartFromDb.clear();
             cartRepository.save(cartFromDb);
             inboxRepository.save(new RedisStockInbox(eventId, Instant.now()));
@@ -106,12 +110,12 @@ public class RedisStockProvider {
         }
     }
 
-    public Cart getUsersCart(UUID cartId) {
-        Optional<Cart> cart = cartRepository.findById(cartId);
+    public Cart getUsersCart(UUID userId) {
+        Optional<Cart> cart = cartRepository.findByUserId(userId);
         if (cart.isPresent()) {
             return cart.get();
         }
-        throw new IllegalArgumentException("No cart with id:" + cartId.toString());
+        throw new CartNotFoundException(userId.toString());
     }
 
     //TODO explain in doc why it is really bad idea (cache stampede)//

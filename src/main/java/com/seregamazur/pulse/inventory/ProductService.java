@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.seregamazur.pulse.inventory.dto.ProductCreateRequest;
 import com.seregamazur.pulse.inventory.dto.ProductInput;
 import com.seregamazur.pulse.inventory.dto.ProductResponse;
+import com.seregamazur.pulse.inventory.exception.ProductNotFoundException;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class ProductService {
     @Transactional
     public ProductResponse updateProduct(UUID id, ProductInput input) {
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Product not found"));
+            .orElseThrow(() -> new ProductNotFoundException(id.toString()));
 
         product.updateDetails(input.name(), input.basePrice());
         return ProductResponse.fromEntity(product);

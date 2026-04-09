@@ -10,14 +10,14 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import tools.jackson.databind.ObjectMapper;
-
 @Configuration
 public class RedisConfig {
 
-    private final ObjectMapper mapper = new ObjectMapper();
     @Value("classpath:redis-reserve-stocks-script.lua")
-    private Resource redisScript;
+    private Resource reserveRedisScriptResource;
+
+    @Value("classpath:redis-remove-expired-reserves-script.lua")
+    private Resource removeReserveRedisScriptResource;
 
     //To work with cart and IDs
     @Bean
@@ -48,8 +48,13 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisScript<Long> reserveStocksInRedisScript() {
-        return RedisScript.of(redisScript, Long.class);
+    public RedisScript<Long> reserveRedisScript() {
+        return RedisScript.of(reserveRedisScriptResource, Long.class);
+    }
+
+    @Bean
+    public RedisScript<Long> removeReserveRedisScript() {
+        return RedisScript.of(removeReserveRedisScriptResource, Long.class);
     }
 
 

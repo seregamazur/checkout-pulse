@@ -1,7 +1,5 @@
 package com.seregamazur.pulse;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +16,8 @@ import com.seregamazur.pulse.shared.outbox.OutboxRepository;
 import com.seregamazur.pulse.shared.outbox.OutboxType;
 
 import tools.jackson.databind.ObjectMapper;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {

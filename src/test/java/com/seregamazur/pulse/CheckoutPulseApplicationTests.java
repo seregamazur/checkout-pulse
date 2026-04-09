@@ -6,13 +6,13 @@ import org.springframework.context.annotation.Import;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {
-	"spring.docker.compose.enabled=false",
-	"spring.flyway.enabled=false"
+    "spring.docker.compose.enabled=false",
+    "spring.flyway.enabled=false"
 })
 class CheckoutPulseApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }

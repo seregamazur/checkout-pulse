@@ -50,7 +50,7 @@ public class OrderService {
     private final ObjectMapper mapper;
 
     @Transactional
-    public OrderResponse createOrder(UUID cartId, UUID idempotencyKey) throws IllegalStateException {
+    public OrderResponse createOrder(UUID userId, UUID idempotencyKey) throws IllegalStateException {
         Optional<IdempotencyRecord> record = idempotencyRepository.findById(idempotencyKey);
         if (record.isPresent()) {
             if (record.get().getStatus() == IdempotencyStatus.COMPLETED) {
@@ -60,7 +60,7 @@ public class OrderService {
                 throw new IllegalStateException("Idempotency not finished progress!");
             }
         }
-        Cart cart = stockProvider.getUsersCart(cartId);
+        Cart cart = stockProvider.getUsersCart(userId);
         List<UUID> productIds = cart.getItems().stream()
             .map(CartItem::getProductId)
             .toList();

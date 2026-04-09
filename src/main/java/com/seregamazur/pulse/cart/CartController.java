@@ -16,6 +16,7 @@ import com.seregamazur.pulse.cart.dto.CartItemDetailed;
 import com.seregamazur.pulse.cart.dto.CartItemRequest;
 import com.seregamazur.pulse.cart.dto.CartResponse;
 import com.seregamazur.pulse.inventory.ProductRepository;
+import com.seregamazur.pulse.inventory.exception.ProductNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,8 +30,12 @@ public class CartController {
 
     @PutMapping("/{userId}/items")
     public ResponseEntity<Void> updateItem(@PathVariable UUID userId, @RequestBody CartItemRequest request) {
-        cartService.updateItem(userId, request.productId(), request.quantity());
-        return ResponseEntity.ok().build();
+        try {
+            cartService.updateItem(userId, request.productId(), request.quantity());
+            return ResponseEntity.ok().build();
+        } catch (ProductNotFoundException pe) {
+            return ResponseEntity.status(404).build();
+        }
     }
 
     @GetMapping("/{userId}")

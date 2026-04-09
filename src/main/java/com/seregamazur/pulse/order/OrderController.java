@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.seregamazur.pulse.inventory.exception.CartNotFoundException;
 import com.seregamazur.pulse.order.dto.OrderCreateRequest;
 import com.seregamazur.pulse.order.dto.OrderResponse;
 
@@ -28,9 +29,11 @@ public class OrderController {
             return ResponseEntity.status(409).build();
         }
         try {
-            return ResponseEntity.ok().body(orderService.createOrder(request.cartId(), request.idempotencyKey()));
+            return ResponseEntity.ok().body(orderService.createOrder(request.userId(), request.idempotencyKey()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).build();
+        } catch (CartNotFoundException ce) {
+            return ResponseEntity.status(404).build();
         } finally {
             redisTemplate.opsForValue().getAndDelete("lock:" + request.idempotencyKey());
         }
