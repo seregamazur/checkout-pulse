@@ -42,3 +42,7 @@ spring:
           enabled: true
           initial-interval: 2s
           max-attempts: 3
+
+reconciliation:
+  enabled: true
+  interval-ms: 300000

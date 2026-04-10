@@ -1,7 +1,11 @@
 package com.seregamazur.pulse.cart;
 
+import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.UpdateTimestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -23,6 +27,10 @@ public class CartItem {
 
     private UUID productId;
     private long quantity;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     protected CartItem() {
     }

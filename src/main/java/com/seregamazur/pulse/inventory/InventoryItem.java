@@ -1,7 +1,11 @@
 package com.seregamazur.pulse.inventory;
 
+import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.UpdateTimestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -20,6 +24,10 @@ public class InventoryItem {
 
     @Version
     private Long version;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     protected InventoryItem() {
     }

@@ -53,7 +53,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
             Product product = createProduct("iPhone", new BigDecimal("999.00"), 50);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 2);
 
-            OrderResponse response = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse response = orderService.createOrder(USER_ID, UUID.randomUUID());
 
             assertThat(response.status()).isEqualTo(OrderStatus.CREATED);
             assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("1998.00"));
@@ -78,8 +78,8 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
             UUID idempotencyKey = UUID.randomUUID();
 
-            OrderResponse first = orderService.createOrder(cart.getId(), idempotencyKey);
-            OrderResponse second = orderService.createOrder(cart.getId(), idempotencyKey);
+            OrderResponse first = orderService.createOrder(USER_ID, idempotencyKey);
+            OrderResponse second = orderService.createOrder(USER_ID, idempotencyKey);
 
             assertThat(second.status()).isEqualTo(first.status());
             assertThat(second.totalAmount()).isEqualByComparingTo(first.totalAmount());
@@ -99,7 +99,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void happyPath_orderCompleted() {
             Product product = createProduct("MacBook", new BigDecimal("1299.00"), 15);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
             List<OrderCreatedEvent.Item> items = eventItems(product.getId(), 1);
 
@@ -146,7 +146,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void outOfStock_orderFailed() {
             Product product = createProduct("Limited Edition", new BigDecimal("500.00"), 1);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 2);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
             List<OrderCreatedEvent.Item> items = eventItems(product.getId(), 2);
 
@@ -183,7 +183,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void paymentDeclined_inventoryReleasedOrderFailed() {
             Product product = createProduct("MacBook", new BigDecimal("1299.00"), 15);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
             List<OrderCreatedEvent.Item> items = eventItems(product.getId(), 1);
 
@@ -232,7 +232,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void happyPath_orderCompleted() {
             Product product = createProduct("iPad", new BigDecimal("799.00"), 30);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
             List<OrderCreatedEvent.Item> items = eventItems(product.getId(), 1);
 
@@ -276,7 +276,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void inventoryFailsAfterPayment_refundTriggered() {
             Product product = createProduct("Rare Item", new BigDecimal("999.00"), 0);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
             List<OrderCreatedEvent.Item> items = eventItems(product.getId(), 1);
 
@@ -336,7 +336,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void sameEventProcessedOnce() {
             Product product = createProduct("Watch", new BigDecimal("399.00"), 50);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
             List<OrderCreatedEvent.Item> items = eventItems(product.getId(), 1);
 
@@ -371,7 +371,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void completedOrder_correctDisplayStatus() {
             Product product = createProduct("Speaker", new BigDecimal("199.00"), 40);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
 
             OrderUpdatedEvent updateEvent = new OrderUpdatedEvent(orderId);
@@ -386,7 +386,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void completedSaga_completedDisplayStatus() {
             Product product = createProduct("Tablet", new BigDecimal("499.00"), 20);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
             List<OrderCreatedEvent.Item> items = eventItems(product.getId(), 1);
 
@@ -410,7 +410,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void failedOutOfStock_correctDisplayStatus() {
             Product product = createProduct("Rare Item", new BigDecimal("999.00"), 50);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
 
             InventoryFailedEvent failedEvent = new InventoryFailedEvent(
@@ -428,7 +428,7 @@ class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         void paymentDeclined_correctDisplayStatus() {
             Product product = createProduct("Gadget", new BigDecimal("299.00"), 50);
             Cart cart = createCartWithItem(USER_ID, product.getId(), 1);
-            OrderResponse created = orderService.createOrder(cart.getId(), UUID.randomUUID());
+            OrderResponse created = orderService.createOrder(USER_ID, UUID.randomUUID());
             UUID orderId = created.orderId();
 
             PaymentDeclinedEvent declinedEvent = new PaymentDeclinedEvent(
